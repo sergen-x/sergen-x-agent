@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use tokio;
 use crate::common::http;
 
 // Documentation: https://github.com/adoptium/api.adoptium.net/blob/main/docs/cookbook.adoc
@@ -19,10 +18,9 @@ struct AdoptiumVersions {
     _tip_version: i32, 
 }
 
-#[tokio::main]
 pub async fn get_versions() -> Result<(), Box<dyn std::error::Error>> {
 
-    let supported_os = vec![
+    let _supported_os = vec![
         "linux",
         "windows",
         "macos",
@@ -31,7 +29,7 @@ pub async fn get_versions() -> Result<(), Box<dyn std::error::Error>> {
         "alpine-linux",
     ];
     
-    let supported_architecture = vec![
+    let _supported_architecture = vec![
         "x64",
         "x86",
         "x32",
@@ -43,7 +41,7 @@ pub async fn get_versions() -> Result<(), Box<dyn std::error::Error>> {
         "sparcv9",
         "riscv64",
     ];
-    let image_type = vec![
+    let _image_type = vec![
         "jdk",
         "jre"
     ];

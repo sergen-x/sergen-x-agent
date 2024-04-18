@@ -2,9 +2,7 @@ use reqwest::{Error, Response, Client};
 use once_cell::sync::Lazy;
 use serde::de::DeserializeOwned;
 use std::fs::File;
-use std::io::BufWriter;
 use std::io;
-use tokio;
 
 static CLIENT: Lazy<Client> = Lazy::new(|| Client::new());
 

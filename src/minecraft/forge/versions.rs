@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use tokio;
 use crate::common::http;
 use crate::common::kv::pair::Map;
 
@@ -10,7 +9,6 @@ struct ForgeVersions {
     promos: Map<String, String>,
 }
 
-#[tokio::main]
 pub async fn get_versions() -> Result<(), Box<dyn std::error::Error>> {
     let url = "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json";
     let versions: ForgeVersions = http::get(url).await?;

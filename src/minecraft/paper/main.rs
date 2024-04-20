@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use tokio;
+use serde_json;
 use crate::common::http;
 
 #[derive(Debug, Deserialize)]
@@ -8,7 +8,7 @@ struct Projects {
     _projects: Vec<String>,
 }
 
-#[deride(Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 struct Project {
     #[serde(rename="project_id")]
     _project_id: String,
@@ -20,7 +20,7 @@ struct Project {
     _versions: Vec<String>,
 }
 
-#[deride(Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Builds {
     #[serde(rename = "project_id")]
@@ -31,7 +31,7 @@ pub struct Builds {
     pub builds: Vec<Build>,
 }
 
-#[deride(Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Build {
     pub build: i64,
@@ -42,7 +42,7 @@ pub struct Build {
     pub downloads: Downloads,
 }
 
-#[deride(Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Change {
     pub commit: String,
@@ -50,13 +50,13 @@ pub struct Change {
     pub message: String,
 }
 
-#[deride(Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Downloads {
     pub application: Application,
 }
 
-#[deride(Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Application {
     pub name: String,
@@ -73,10 +73,10 @@ pub async fn get_versions(
     project: &str
 ) -> Result<(), Box<dyn std::error::Error>> {
     let url = format!(
-        "https://api.papermc.io/v2/projects/{}}",
+        "https://api.papermc.io/v2/projects/{}",
         project
     );
-    let versions: Project = http::get(url).await?;
+    let versions: Project = http::get(&url).await?;
     Ok(())
 }
 
@@ -85,10 +85,10 @@ pub async fn get_builds(
     minecraft_version: &str, 
 ) -> Result<(), Box<dyn std::error::Error>> {
     let url = format!(
-        "https://api.papermc.io/v2/projects/{}/versions/{}}/builds",
+        "https://api.papermc.io/v2/projects/{}/versions/{}/builds",
         project, minecraft_version,
     );
-    let builds: Builds = http::get(url).await?;
+    let builds: Builds = http::get(&url).await?;
 
     Ok(())
 }
@@ -100,7 +100,7 @@ pub async fn download_build(
     jar_name: &str
 ) -> Result<(), Box<dyn std::error::Error>> {
     let url = format!(
-        "https://api.papermc.io/v2/projects/{}}/versions/{}/builds/{}/downloads/{}}",
+        "https://api.papermc.io/v2/projects/{}/versions/{}/builds/{}/downloads/{}",
         project, minecraft_version, build, jar_name
     );
     http::download_file(&url).await?;

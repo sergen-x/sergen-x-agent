@@ -1,0 +1,41 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Find release to overwrite
+        id: find_release
+        run: |
+          RELEASE_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${GITHUB_REPOSITORY}/releases | jq -r '.[] | select(.tag_name == "v1.0.0") | .id')
+          echo "Overwriting release with ID: $RELEASE_ID"
+          echo "::set-output name=release_id::$RELEASE_ID"
+      - name: Delete the existing release
+        if: steps.find_release.outputs.release_id != ''
+        run: |
+          RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
+          curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/$RELEASE_ID
+      - name: Create a new release
+        run: |
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"tag_name": "v1.0.0", "name": "Release 1.0.0", "body": "Release description"}' \
+            https://api.github.com/repos/${GITHUB_REPOSITORY}/releases

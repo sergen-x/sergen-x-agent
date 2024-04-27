@@ -867,7 +867,6 @@ name = "sergen_x_agent"
 version = "0.1.0"
 dependencies = [
  "clap",
- "indexmap",
  "once_cell",
  "reqwest",
  "serde",

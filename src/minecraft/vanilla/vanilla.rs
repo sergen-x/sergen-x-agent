@@ -36,35 +36,37 @@ impl VersionManifest {
         }
         None
     }
+
+    pub async fn get_download_url(
+        &self,
+        version: &str,
+    ) -> Result<Option<VersionInfo>, Box<dyn std::error::Error>> {
+        match self.find_url_by_id(version) {
+            Some(url) => {
+                let info: VersionInfo = http::get(url).await?;
+                Ok(Some(info))
+            }
+            None => {
+                println!("Version {} could not located in the version manifest.", version);
+                Ok(None)
+            }
+        }
+    }
+}
+
+impl VersionInfo {
+    pub async fn download(
+        &self,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        //let url = &version_manifest.latest.release;
+        println!("{}", self.downloads.server.url);
+        http::download_file(&self.downloads.server.url).await?;
+        Ok(())
+    }
 }
 
 pub async fn get_all_versions() -> Result<VersionManifest, Box<dyn std::error::Error>> {
     let url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     let versions: VersionManifest = http::get(url).await?;
     Ok(versions)
-}
-
-pub async fn get_download_url(
-    version: &str,
-    version_manifest: VersionManifest,
-) -> Result<Option<VersionInfo>, Box<dyn std::error::Error>> {
-    match version_manifest.find_url_by_id(version) {
-        Some(url) => {
-            let info: VersionInfo = http::get(url).await?;
-            Ok(Some(info))
-        }
-        None => {
-            println!("Version {} could not located in the version manifest.", version);
-            Ok(None)
-        }
-    }
-}
-
-pub async fn download_version(
-    version_info: VersionInfo
-) -> Result<(), Box<dyn std::error::Error>> {
-    //let url = &version_manifest.latest.release;
-    println!("{}", &version_info.downloads.server.url);
-    http::download_file(&version_info.downloads.server.url).await?;
-    Ok(())
 }

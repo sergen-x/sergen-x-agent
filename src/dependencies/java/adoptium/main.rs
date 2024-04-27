@@ -18,6 +18,24 @@ struct AdoptiumVersions {
     _tip_version: i32, 
 }
 
+pub fn get_architecture() -> Result<String, Box<dyn std::error::Error>> {
+    let arch = std::env::consts::ARCH;
+    let architecture_type = match arch {
+        "x86_64" => "x64",
+        "x86" => "x86",
+        "i386" | "i486" | "i586" | "i686" => "x32",
+        "powerpc64" => "ppc64",
+        "powerpc64le" => "ppc64le",
+        "s390x" => "alpine-s390x",
+        "aarch64" => "aarch64",
+        "arm" => "arm",
+        "sparcv9" => "sparcv9",
+        "riscv64" => "riscv64",
+        _ => return Err(format!("Unknown system architecture: {}", arch).into()),
+    };
+    Ok(architecture_type.to_string())
+}
+
 pub async fn get_versions() -> Result<(), Box<dyn std::error::Error>> {
 
     let _supported_os = vec![

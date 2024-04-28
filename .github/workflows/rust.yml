@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --release --verbose
       - name: Run tests
         run: cargo test --verbose
       - name: Find release to overwrite
@@ -32,10 +32,29 @@ jobs:
         run: |
           RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
           curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/$RELEASE_ID
-      - name: Create a new release
+      - name: Create GitHub release
+        id: create_release
         run: |
-          curl -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '{"tag_name": "v1.0.0", "name": "Release 1.0.0", "body": "Release description"}' \
-            https://api.github.com/repos/${GITHUB_REPOSITORY}/releases
+          RELEASE_JSON=$(curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" -d '{"tag_name": "v1.0.0", "name": "Release 1.0.0", "body": "Release description"}' "https://api.github.com/repos/${{ github.repository }}/releases")
+          RELEASE_ID=$(echo $RELEASE_JSON | jq -r '.id')
+          echo "::set-output name=new_release_id::$RELEASE_ID"
+      
+      - name: Get upload URL
+        id: upload_url
+        run: |
+          UPLOAD_URL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.new_release_id }}" | jq -r '.upload_url' | sed 's/{?name,label}//')
+          echo "::set-output name=upload_url::$UPLOAD_URL"
+
+      - name: Create .tar.gz archive
+        run: |
+          cd target/release
+          tar -czf build.tar.gz sergen_x_agent
+          mv build.tar.gz ../../
+    
+      - name: Upload build artifact
+        run: |
+          UPLOAD_URL="${{ steps.upload_url.outputs.upload_url }}"
+          cd target/release
+          tar -czf build.tar.gz your_binary_name
+          mv build.tar.gz ../../
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/gzip" --data-binary @"../../build.tar.gz" "$UPLOAD_URL?name=build.tar.gz"

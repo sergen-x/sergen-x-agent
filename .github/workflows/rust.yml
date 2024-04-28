@@ -55,6 +55,6 @@ jobs:
         run: |
           UPLOAD_URL="${{ steps.upload_url.outputs.upload_url }}"
           cd target/release
-          tar -czf build.tar.gz your_binary_name
+          tar -czf build.tar.gz sergen_x_agent
           mv build.tar.gz ../../
           curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/gzip" --data-binary @"../../build.tar.gz" "$UPLOAD_URL?name=build.tar.gz"

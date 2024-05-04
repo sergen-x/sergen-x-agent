@@ -24,14 +24,14 @@ jobs:
       - name: Find release to overwrite
         id: find_release
         run: |
-          RELEASE_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${GITHUB_REPOSITORY}/releases | jq -r '.[] | select(.tag_name == "v1.0.0") | .id')
+          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases | jq -r '.[] | select(.tag_name == "v1.0.0") | .id')
           echo "Overwriting release with ID: $RELEASE_ID"
           echo "::set-output name=release_id::$RELEASE_ID"
       - name: Delete the existing release
         if: steps.find_release.outputs.release_id != ''
         run: |
           RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
-          curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/$RELEASE_ID
+          curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
       - name: Create GitHub release
         id: create_release
         run: |

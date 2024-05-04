@@ -31,7 +31,7 @@ jobs:
         if: steps.find_release.outputs.release_id != ''
         run: |
           RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
-          curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/${{ github.repository }}/releases/${{ steps.find_release.outputs.release_id }}
+          curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/${{ steps.find_release.outputs.release_id }}
       - name: Create GitHub release
         id: create_release
         run: |

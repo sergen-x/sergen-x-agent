@@ -1,0 +1,78 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --release --verbose
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Find release to overwrite
+        id: find_release
+        run: |
+          RELEASE_INFO=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases | jq -r '.[0] | .id, .tag_name')
+          IFS=$'\n' read -r RELEASE_ID TAG_NAME <<< "$RELEASE_INFO"
+          echo "Overwriting release with ID: $RELEASE_ID"
+          echo "::set-output name=release_id::$RELEASE_ID"
+          echo "::set-output name=tag_name::$TAG_NAME"
+      - name: Delete the existing release
+        if: steps.find_release.outputs.release_id != ''
+        run: |
+          RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
+          curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/${{ steps.find_release.outputs.release_id }}
+      - name: Increment version
+        id: increment_version
+        run: |
+            TAG_NAME="${{ steps.find_release.outputs.tag_name }}"
+            if [ -z "$TAG_NAME" ]; then
+                TAG_NAME="v1.0.0"
+            fi
+            VERSION=${TAG_NAME#"v"}
+            IFS='.' read -r major minor <<< "$VERSION"
+            minor=$((minor + 1))
+            NEW_TAG="v$major.$minor"
+            echo "::set-output name=new_tag::$NEW_TAG"
+      - name: Create GitHub release
+        id: create_release
+        run: |
+          RELEASE_JSON=$(curl -X POST \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d "{\"tag_name\": \"${{ steps.increment_version.outputs.new_tag }}\", \"name\": \"Release ${{ steps.increment_version.outputs.new_tag }}\", \"body\": \"Default Release description\"}" \
+          "https://api.github.com/repos/${{ github.repository }}/releases")
+                RELEASE_ID=$(echo $RELEASE_JSON | jq -r '.id')
+                echo "::set-output name=new_release_id::$RELEASE_ID"
+    
+      - name: Get upload URL
+        id: upload_url
+        run: |
+          UPLOAD_URL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.new_release_id }}" | jq -r '.upload_url' | sed 's/{?name,label}//')
+          echo "::set-output name=upload_url::$UPLOAD_URL"
+
+      - name: Create .tar.gz archive
+        run: |
+          cd target/release
+          tar -czf build.tar.gz sergen_x_agent
+          mv build.tar.gz ../../
+    
+      - name: Upload build artifact
+        run: |
+          UPLOAD_URL="${{ steps.upload_url.outputs.upload_url }}"
+          cd target/release
+          tar -czf build.tar.gz sergen_x_agent
+          mv build.tar.gz ../../
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/gzip" --data-binary @"../../build.tar.gz" "$UPLOAD_URL?name=build.tar.gz"

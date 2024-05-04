@@ -35,6 +35,7 @@ jobs:
           RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
           curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/${{ steps.find_release.outputs.release_id }}
       - name: Increment version
+        id: increment_version
         run: |
             TAG_NAME="${{ steps.find_release.outputs.tag_name }}"
             if [ -z "$TAG_NAME" ]; then
@@ -48,10 +49,14 @@ jobs:
       - name: Create GitHub release
         id: create_release
         run: |
-          RELEASE_JSON=$(curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" -d "{"tag_name": "${{ steps.increment_version.outputs.new_tag }}", "name": "Release ${{ steps.increment_version.outputs.new_tag }}", "body": "Default Release description"}" "https://api.github.com/repos/${{ github.repository }}/releases")
-          RELEASE_ID=$(echo $RELEASE_JSON | jq -r '.id')
-          echo "::set-output name=new_release_id::$RELEASE_ID"
-      
+          RELEASE_JSON=$(curl -X POST \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d "{\"tag_name\": \"${{ steps.increment_version.outputs.new_tag }}\", \"name\": \"Release ${{ steps.increment_version.outputs.new_tag }}\", \"body\": \"Default Release description\"}" \
+          "https://api.github.com/repos/${{ github.repository }}/releases")
+                RELEASE_ID=$(echo $RELEASE_JSON | jq -r '.id')
+                echo "::set-output name=new_release_id::$RELEASE_ID"
+    
       - name: Get upload URL
         id: upload_url
         run: |

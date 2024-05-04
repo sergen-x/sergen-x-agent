@@ -37,6 +37,9 @@ jobs:
       - name: Increment version
         run: |
           TAG_NAME="${{ steps.find_release.outputs.tag_name }}"
+           if [ -z "$TAG_NAME" ]; then
+              TAG_NAME="v1.0.0"
+          fi
           IFS='.' read -r major minor <<< "$TAG_NAME"
           ((minor++))
           NEW_TAG="v$major.$minor"

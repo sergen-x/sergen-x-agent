@@ -24,18 +24,27 @@ jobs:
       - name: Find release to overwrite
         id: find_release
         run: |
-          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases | jq -r '.[] | select(.tag_name == "v1.0.0") | .id')
+          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases | jq -r '.[] | select(.tag_name | startswith("v1.")) | .id, .tag_name')
+          IFS=$'\n' read -rd '' RELEASE_ID TAG_NAME <<< "$RELEASE_INFO"
           echo "Overwriting release with ID: $RELEASE_ID"
           echo "::set-output name=release_id::$RELEASE_ID"
+          echo "::set-output name=tag_name::$TAG_NAME"
       - name: Delete the existing release
         if: steps.find_release.outputs.release_id != ''
         run: |
           RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
           curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/${{ steps.find_release.outputs.release_id }}
+      - name: Increment version
+        run: |
+          TAG_NAME="${{ steps.find_release.outputs.tag_name }}"
+          IFS='.' read -r major minor <<< "$TAG_NAME"
+          ((minor++))
+          NEW_TAG="v$major.$minor"
+          echo "::set-output name=new_tag::$NEW_TAG"
       - name: Create GitHub release
         id: create_release
         run: |
-          RELEASE_JSON=$(curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" -d '{"tag_name": "v1.0.0", "name": "Release 1.0.0", "body": "Release description"}' "https://api.github.com/repos/${{ github.repository }}/releases")
+          RELEASE_JSON=$(curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" -d "{"tag_name": "${{ steps.increment_version.outputs.new_tag }}", "name": "Release ${{ steps.increment_version.outputs.new_tag }}", "body": "Default Release description"}" "https://api.github.com/repos/${{ github.repository }}/releases")
           RELEASE_ID=$(echo $RELEASE_JSON | jq -r '.id')
           echo "::set-output name=new_release_id::$RELEASE_ID"
       

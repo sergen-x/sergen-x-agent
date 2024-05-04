@@ -36,14 +36,15 @@ jobs:
           curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/${{ steps.find_release.outputs.release_id }}
       - name: Increment version
         run: |
-          TAG_NAME="${{ steps.find_release.outputs.tag_name }}"
-           if [ -z "$TAG_NAME" ]; then
-              TAG_NAME="v1.0.0"
-          fi
-          IFS='.' read -r major minor <<< "$TAG_NAME"
-          ((minor++))
-          NEW_TAG="v$major.$minor"
-          echo "::set-output name=new_tag::$NEW_TAG"
+           TAG_NAME=""
+            if [ -z "$TAG_NAME" ]; then
+                TAG_NAME="v1.0.0"
+            fi
+            VERSION=${TAG_NAME#"v"}
+            IFS='.' read -r major minor <<< "$VERSION"
+            ((minor++))
+            NEW_TAG="v$major.$minor"
+            echo "::set-output name=new_tag::$NEW_TAG"
       - name: Create GitHub release
         id: create_release
         run: |

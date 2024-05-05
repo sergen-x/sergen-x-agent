@@ -1,7 +1,14 @@
+use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
 
-pub(crate) trait Installer {
-    fn install(&self) ->  Pin<Box<dyn Future<Output=()>>>;
-    fn install_dependencies(&self) ->  Pin<Box<dyn Future<Output=()>>>;
+pub type InstallerFuture = Pin<Box<dyn Future<Output = Result<(), Box<dyn Error>>> + Send>>;
+
+pub(crate) trait Installer: Send {
+    fn install(&self) -> InstallerFuture;
+    fn install_dependencies(&self) -> InstallerFuture;
+}
+
+pub(crate) trait Runner: Send {
+    fn start(&self) -> InstallerFuture;
 }

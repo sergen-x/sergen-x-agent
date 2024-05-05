@@ -34,10 +34,4 @@ The start command loads the game from the configuration and starts the server.
 - [ ] SteamCMD
 
 ## Add Minecraft server JARs
-- [ ] [QuiltMC](https://quiltmc.org/en/)
-- [ ] [Mohist/Banner](https://mohistmc.com/)
-- [ ] [Purpur](https://purpurmc.org/)
 - [ ] [Pufferfish](https://pufferfish.host/downloads)
-- [ ] [ArcLight](https://github.com/IzzelAliz/Arclight)
-- [ ] [Crucible](https://github.com/CrucibleMC/Crucible)
-- [ ] [NeoForged](https://neoforged.net/news/2023-retrospection/)

@@ -21,7 +21,6 @@ where
 
 pub async fn download_file(url: &str) -> Result<(), Error> {
     let client: &Client = &*CLIENT;
-    println!("Sending request to {}", url);
     let resp: Response = client.get(url).send().await?;
     if !resp.status().is_success() {
         eprintln!("HTTP request failed: Code {}", resp.status());
@@ -38,13 +37,11 @@ pub async fn download_file(url: &str) -> Result<(), Error> {
     };
 
     println!("Downloading file: {}", filename);
-
     // Read response body and write to file
     let body = resp.text().await?;
     let downloaded_file_name: String = filename.clone();
     let mut out: File = File::create(filename).expect("err creating file");
     io::copy(&mut body.as_bytes(), &mut out).expect("err copying client");
-
     println!("File downloaded successfully: {}", downloaded_file_name);
 
     Ok(())
@@ -64,13 +61,16 @@ fn extract_filename(resp: &Response, url: &str) -> Result<String, IoError> {
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
 fn extract_filename_from_response(resp: &reqwest::Response) -> Option<String> {
     if let Some(content_disposition) = resp.headers().get("Content-Disposition") {
-        if let Ok(content) = content_disposition.to_str() {
-            if let Some(filename) = parse_filename_from_content_disposition(content) {
-                return Some(filename.to_string());
-            }
-        }
+        content_disposition
+            .to_str()
+            .ok()
+            .and_then(|content|
+                parse_filename_from_content_disposition(content)
+            ).map(|filename| filename.to_string())
     }
-    None
+    else {
+        None
+    }
 }
 
 fn parse_filename_from_content_disposition(content: &str) -> Option<&str> {

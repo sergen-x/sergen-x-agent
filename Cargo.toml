@@ -8,11 +8,15 @@ edition = "2021"
 clap = { version = "4.5.4" , features = ["cargo"] }
 reqwest = { version = "0.12", features = ["json", "rustls-tls"],  default-features = false }
 tokio = { version = "1", features = ["full"] }
+once_cell = "1.19.0"
+# JSON Serialisation
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-once_cell = "1.19.0"
-sha2 = "0.10"
 toml = "0.8.12"
+# Checksum algorithms
+# https://github.com/RustCrypto/hashes
+sha2 = "0.10"
+md-5 = "0.10.6"
 
 [profile.release]
 strip = true

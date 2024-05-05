@@ -3,3 +3,7 @@ pub mod paper;
 pub mod vanilla;
 pub mod sponge;
 pub mod main;
+pub mod quilt;
+pub mod neoforged;
+pub mod purpur;
+pub mod mohist;

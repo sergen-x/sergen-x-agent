@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use clap::{arg, command, Command};
+use clap::{Arg, command, Command};
 use std::future::Future;
 use std::ops::Deref;
 use crate::common::installer::Installer;
@@ -42,7 +42,10 @@ async fn main() {
             Command::new("install")
                 .about("Installs a game")
                 .arg(
-                    arg!(--"game" <PATH>)
+                    Arg::new("game")
+                        .index(1)
+                        .required(true)
+                        .help("Name of the game to install"),
                 ),
         )
         .subcommand(

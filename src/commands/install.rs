@@ -11,7 +11,10 @@ pub struct InstallCommand;
 impl AsyncCommand for InstallCommand {
     fn execute(&self, args: &clap::ArgMatches) ->  SergenCommand {
         let args_clone = args.clone();
+
         Box::pin(async move {
+            let version = args_clone.get_one::<String>("version");
+            let variant = args_clone.get_one::<String>("variant");
             let games: Arc<Mutex<HashMap<String, Arc<Mutex<dyn Installer>>>>> = get_games().await;
             match args_clone.get_one::<String>("game") {
                 Some(game) => {
@@ -20,7 +23,7 @@ impl AsyncCommand for InstallCommand {
                         let game = game.lock().await;
                         // Todo: error handling
                         let _ = game.install_dependencies().await;
-                        let _ = game.install().await;
+                        let _ = game.install(version.cloned(), variant.cloned()).await;
                     } else {
                         println!("Game not recognized");
                     }

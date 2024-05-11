@@ -16,11 +16,14 @@ async fn install_game(args: &clap::ArgMatches) {
     let mut games: HashMap<&str, Box<dyn Installer>> = HashMap::new();
     games.insert("minecraft", Box::new(minecraft::main::Minecraft));
 
+    let version = args.get_one::<String>("version");
+    let variant = args.get_one::<String>("variant");
+
     match args.get_one::<String>("game") {
         Some(game) => {
             if let Some(func) = games.get(&game.as_str()) {
-                func.install_dependencies().await;
-                func.install().await;
+                let _ = func.install_dependencies().await;
+                let _ = func.install(version.cloned(), variant.cloned()).await;
             } else {
                 println!("Game not recognized");
             }
@@ -46,6 +49,18 @@ async fn main() {
                         .index(1)
                         .required(true)
                         .help("Name of the game to install"),
+                )
+                .arg(
+                    Arg::new("variant")
+                        .index(2)
+                        .required(false)
+                        .help("The variant of the game to install"),
+                )
+                .arg(
+                    Arg::new("version")
+                        .index(3)
+                        .required(false)
+                        .help("The version of the game to install"),
                 ),
         )
         .subcommand(

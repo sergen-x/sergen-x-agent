@@ -1,34 +1,31 @@
 use std::{fs, io};
 use std::io::Write;
 use crate::minecraft;
-use crate::common::installer::{Installer, InstallerFuture, Runner};
+use crate::common::installer::{Installer, InstallerFuture, Runner, SimpleInstaller};
 
 pub(crate) struct Minecraft;
 
 impl Installer for Minecraft {
-    fn install(&self) -> InstallerFuture {
-        Box::pin(async {
-            let manifest = minecraft::vanilla::vanilla::get_all_versions()
-                .await
-                .expect("Failed to fetch version manifest");
-            let release_version = manifest.latest.release.clone();
-            let version = manifest.get_download_url(&release_version)
-                .await
-                .expect("Failed to fetch download URL");
+    fn install(
+        &self,
+        version: Option<String>,
+        variant: Option<String>
+    ) -> InstallerFuture {
+        Box::pin(async move {
+            let variant_str = variant.unwrap().clone();
+            let version_str = version.clone();
 
-            if let Some(ref version_info) = version {
-                let _ = version.expect("Missing version").download()
-                    .await
-                    .expect("Failed to download version");
-            } else {
-                panic!("VersionInfo is None, cannot download version");
-            }
+            let installer: Box<dyn SimpleInstaller> = match variant_str.as_str() {
+                "vanilla" => Box::new(minecraft::vanilla::vanilla::VanillaMinecraft),
+                _ => return Err("Unsupported distribution variant".into()),
+            };
+            installer.install(version_str).await.expect("TODO: panic message");
             Ok(())
         })
     }
 
     fn install_dependencies(&self) -> InstallerFuture {
-        Box::pin(async {
+        Box::pin(async move {
             let _ = crate::dependencies::java::main::install(
                 "21".to_string(),
                 "adoptium".to_string(),

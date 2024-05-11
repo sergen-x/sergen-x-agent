@@ -9,7 +9,7 @@ impl AsyncCommand for StartCommand {
         Box::pin(async {
             match config::load("../app_config.toml") {
                 Ok(config) => {
-                    if let Some(game) = config.game.variant {
+                    if let Some(_game) = config.game.variant {
                         println!("Game name not found.");
                     } else {
                         println!("Game not found.");

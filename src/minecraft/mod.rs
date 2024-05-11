@@ -7,3 +7,6 @@ pub mod quilt;
 pub mod neoforged;
 pub mod purpur;
 pub mod mohist;
+pub mod technic;
+pub mod modrinth;
+pub mod curseforge;

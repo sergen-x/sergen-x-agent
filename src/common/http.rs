@@ -1,17 +1,21 @@
 use reqwest::{Error, Response, Client, Url};
-use once_cell::sync::Lazy;
+use std::sync::OnceLock;
 use serde::de::DeserializeOwned;
 use std::fs::File;
 use std::io;
 use std::io::Error as IoError;
 
-static CLIENT: Lazy<Client> = Lazy::new(|| Client::new());
+static CLIENT: OnceLock<Client> = OnceLock::new();
+
+fn get_client() -> &'static Client {
+    CLIENT.get_or_init(|| Client::new())
+}
 
 pub async fn get<T>(url: &str) -> Result<T, Error>
 where
     T: DeserializeOwned, 
 {
-    let client: &Client = &*CLIENT;
+    let client: &Client = get_client();
     // TODO: check http status code
     let response: Response = client.get(url).send().await?;
     let body: T = response.json::<T>().await?;
@@ -20,7 +24,7 @@ where
 }
 
 pub async fn download_file(url: &str) -> Result<(), Error> {
-    let client: &Client = &*CLIENT;
+    let client: &Client = get_client();
     let resp: Response = client.get(url).send().await?;
     if !resp.status().is_success() {
         eprintln!("HTTP request failed: Code {}", resp.status());

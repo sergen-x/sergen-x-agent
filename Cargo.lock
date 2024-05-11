@@ -773,7 +773,6 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "md-5",
- "once_cell",
  "reqwest",
  "serde",
  "serde_json",

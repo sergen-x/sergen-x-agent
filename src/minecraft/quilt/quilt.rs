@@ -35,7 +35,7 @@ pub fn run_installer(
     version: &str,
     installer_version: &str,
 ) {
-    let command = format!(
+    let _command = format!(
         "java -jar
         quilt-installer-{installer_version}.jar
         install server {version}

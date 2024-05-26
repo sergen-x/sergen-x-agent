@@ -1,10 +1,10 @@
 use crate::commands::command::AsyncCommand;
 use crate::commands::games::get_commands;
-use crate::common::installer::Installer;
+
 use clap::{command, Arg, ArgMatches, Command};
 use std::collections::HashMap;
-use std::future::Future;
-use std::ops::Deref;
+
+
 use std::sync::Arc;
 
 pub mod commands;

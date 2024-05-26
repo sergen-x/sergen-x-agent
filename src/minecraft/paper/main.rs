@@ -1,7 +1,7 @@
 use crate::common::error::SergenError;
 use crate::common::http;
 use serde::Deserialize;
-use serde_json;
+
 
 #[derive(Debug, Deserialize)]
 struct Projects {
@@ -66,13 +66,13 @@ pub struct Application {
 
 pub async fn get_projects() -> Result<(), SergenError> {
     let url = "https://api.papermc.io/v2/projects";
-    let projects: Projects = http::get(url).await?;
+    let _projects: Projects = http::get(url).await?;
     Ok(())
 }
 
 pub async fn get_versions(project: &str) -> Result<(), SergenError> {
     let url = format!("https://api.papermc.io/v2/projects/{}", project);
-    let versions: Project = http::get(&url).await?;
+    let _versions: Project = http::get(&url).await?;
     Ok(())
 }
 
@@ -84,7 +84,7 @@ pub async fn get_builds(
         "https://api.papermc.io/v2/projects/{}/versions/{}/builds",
         project, minecraft_version,
     );
-    let builds: Builds = http::get(&url).await?;
+    let _builds: Builds = http::get(&url).await?;
 
     Ok(())
 }

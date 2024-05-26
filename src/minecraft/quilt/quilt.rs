@@ -1,7 +1,6 @@
 use std::error::Error;
 use serde::Deserialize;
 use crate::common::http;
-use crate::common::installer::InstallerFuture;
 use crate::common::kv::pair::Map;
 
 #[derive(Deserialize)]
@@ -17,11 +16,9 @@ pub struct Details {
     pub quilted_fabric_api: String,
 }
 
-pub fn download_installer() -> InstallerFuture {
-    Box::pin(async move {
-        http::download_file("https://quiltmc.org/api/v1/download-latest-installer/java-universal").await?;
-        Ok(())
-    })
+pub async fn download_installer() -> Result<(), Box<dyn Error>> {
+    http::download_file("https://quiltmc.org/api/v1/download-latest-installer/java-universal").await?;
+    Ok(())
 }
 
 pub async fn get_installer_version() -> Result<VersionResponse, Box<dyn Error>> {

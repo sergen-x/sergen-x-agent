@@ -4,3 +4,4 @@ pub mod installer;
 pub mod config;
 pub mod hash;
 pub mod sysinfo;
+pub mod error;

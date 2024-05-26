@@ -1,5 +1,5 @@
+use std::error::Error;
 use serde::{Deserialize, Serialize};
-use crate::common::installer::InstallerFuture;
 use crate::common::http;
 
 #[derive(Serialize, Deserialize)]
@@ -51,16 +51,14 @@ struct Info {
     pub md5: String,
 }
 
-fn install(modpack_name: &str) -> InstallerFuture {
+async fn install(modpack_name: &str) -> Result<(), Box<dyn Error>> {
     // Todo: We are supposed to pass the build ID from
     // https://api.technicpack.net/launcher/version/stable4
     // But it works perfectly fine passing a dummy value, for now.
     let url = format!(
         "https://api.technicpack.net/modpack/{modpack_name}?build=latest"
     );
-    Box::pin(async move {
-        let modpack: Modpack = http::get(&url).await?;
-        http::download_file(&modpack.server_pack_url);
-        Ok(())
-    })
+    let modpack: Modpack = http::get(&url).await?;
+    http::download_file(&modpack.server_pack_url);
+    Ok(())
 }

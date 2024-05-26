@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use serde_json;
+use crate::common::error::SergenError;
 use crate::common::http;
 
 #[derive(Debug, Deserialize)]
@@ -63,7 +64,7 @@ pub struct Application {
     pub sha256: String,
 }
 
-pub async fn get_projects() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn get_projects() -> Result<(), SergenError> {
     let url = "https://api.papermc.io/v2/projects";
     let projects: Projects = http::get(url).await?;
     Ok(())
@@ -71,7 +72,7 @@ pub async fn get_projects() -> Result<(), Box<dyn std::error::Error>> {
 
 pub async fn get_versions(
     project: &str
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), SergenError> {
     let url = format!(
         "https://api.papermc.io/v2/projects/{}",
         project
@@ -83,7 +84,7 @@ pub async fn get_versions(
 pub async fn get_builds(
     project: &str,
     minecraft_version: &str, 
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), SergenError> {
     let url = format!(
         "https://api.papermc.io/v2/projects/{}/versions/{}/builds",
         project, minecraft_version,
@@ -98,7 +99,7 @@ pub async fn download_build(
     minecraft_version: &str,
     build: &str,
     jar_name: &str
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), SergenError> {
     let url = format!(
         "https://api.papermc.io/v2/projects/{}/versions/{}/builds/{}/downloads/{}",
         project, minecraft_version, build, jar_name

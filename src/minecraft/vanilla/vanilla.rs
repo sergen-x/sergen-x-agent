@@ -89,12 +89,16 @@ impl SimpleInstaller for VanillaMinecraft {
             .await
             .expect("Failed to fetch version manifest");
 
-        let mut version_exists = String::new();
-        if let Some(ver) = version.clone() {
-            if ver == "latest" {
-                version_exists = manifest.latest.release.clone();
+        let version_exists = match version {
+            None => manifest.latest.release.clone(),
+            Some(ver) => {
+                if ver == "latest" || ver.is_empty() {
+                    manifest.latest.release.clone()
+                } else {
+                    panic!("A version wasn't supplied")
+                }
             }
-        }
+        };
 
         if !version_exists.is_empty() {
             let download_url = manifest
@@ -110,7 +114,7 @@ impl SimpleInstaller for VanillaMinecraft {
                 panic!("VersionInfo is None, cannot download version");
             }
         } else {
-            //
+            panic!("Supplied version did not exist!")
         }
         Ok(())
     }

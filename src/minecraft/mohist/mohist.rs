@@ -1,11 +1,11 @@
+use crate::common::http;
+use serde::Deserialize;
 use std::error::Error;
 use std::io;
-use serde::Deserialize;
-use crate::common::http;
 
 #[derive(Deserialize)]
 pub struct Versions {
-    versions: Vec<String>
+    versions: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -34,12 +34,8 @@ struct Build {
 }
 
 // Projects = ["mohist", "banner"]
-pub async fn get_versions(
-    project: &str,
-) -> Result<Versions, Box<dyn Error>> {
-    let url = format!(
-        "https://mohistmc.com/api/v2/projects/{project}"
-    );
+pub async fn get_versions(project: &str) -> Result<Versions, Box<dyn Error>> {
+    let url = format!("https://mohistmc.com/api/v2/projects/{project}");
     let versions: Versions = http::get(&url).await?;
     Ok(versions)
 }
@@ -63,7 +59,8 @@ impl Builds {
             Ok(())
         } else {
             println!("No builds available.");
-            let error = io::Error::new(io::ErrorKind::Other, "No builds available.");
+            let error =
+                io::Error::new(io::ErrorKind::Other, "No builds available.");
             Err(Box::new(error) as Box<dyn Error>)
         }
     }

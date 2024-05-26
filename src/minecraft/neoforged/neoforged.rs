@@ -1,6 +1,6 @@
+use crate::common::http;
 use reqwest::Error;
 use serde::Deserialize;
-use crate::common::http;
 
 #[derive(Deserialize)]
 pub struct Versions {
@@ -14,7 +14,9 @@ pub async fn get_versions() -> Result<Versions, Error> {
     Ok(res)
 }
 
-pub fn download_version(version: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn download_version(
+    version: &str
+) -> Result<(), Box<dyn std::error::Error>> {
     let url = format!(
         "https://maven.neoforged.net/releases/net/neoforged/neoforge/{version}/neoforge-{version}-installer.jar"
     );

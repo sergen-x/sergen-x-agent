@@ -1,23 +1,23 @@
-use serde::Deserialize;
-use serde_json;
 use crate::common::error::SergenError;
 use crate::common::http;
+use serde::Deserialize;
+use serde_json;
 
 #[derive(Debug, Deserialize)]
 struct Projects {
-    #[serde(rename="projects")]
+    #[serde(rename = "projects")]
     _projects: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct Project {
-    #[serde(rename="project_id")]
+    #[serde(rename = "project_id")]
     _project_id: String,
-    #[serde(rename="project_name")]
+    #[serde(rename = "project_name")]
     _project_name: String,
-    #[serde(rename="version_groups")]
+    #[serde(rename = "version_groups")]
     _version_groups: Vec<String>,
-    #[serde(rename="versions")]
+    #[serde(rename = "versions")]
     _versions: Vec<String>,
 }
 
@@ -70,20 +70,15 @@ pub async fn get_projects() -> Result<(), SergenError> {
     Ok(())
 }
 
-pub async fn get_versions(
-    project: &str
-) -> Result<(), SergenError> {
-    let url = format!(
-        "https://api.papermc.io/v2/projects/{}",
-        project
-    );
+pub async fn get_versions(project: &str) -> Result<(), SergenError> {
+    let url = format!("https://api.papermc.io/v2/projects/{}", project);
     let versions: Project = http::get(&url).await?;
     Ok(())
 }
 
 pub async fn get_builds(
     project: &str,
-    minecraft_version: &str, 
+    minecraft_version: &str,
 ) -> Result<(), SergenError> {
     let url = format!(
         "https://api.papermc.io/v2/projects/{}/versions/{}/builds",
@@ -95,10 +90,10 @@ pub async fn get_builds(
 }
 
 pub async fn download_build(
-    project: &str, 
+    project: &str,
     minecraft_version: &str,
     build: &str,
-    jar_name: &str
+    jar_name: &str,
 ) -> Result<(), SergenError> {
     let url = format!(
         "https://api.papermc.io/v2/projects/{}/versions/{}/builds/{}/downloads/{}",

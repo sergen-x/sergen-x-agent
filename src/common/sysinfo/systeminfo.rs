@@ -4,11 +4,11 @@ use clap::builder::Str;
 
 pub struct SystemInfo {
     pub os: String,
-    pub architecture: String
+    pub architecture: String,
 }
 
 pub fn get_system_info() -> SystemInfo {
-    SystemInfo{
+    SystemInfo {
         os: std::env::consts::OS.to_string(),
         architecture: std::env::consts::ARCH.to_string(),
     }

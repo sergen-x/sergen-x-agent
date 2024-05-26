@@ -1,10 +1,9 @@
-use std::error::Error;
-use async_trait::async_trait;
-use serde::Deserialize;
 use crate::common::error::SergenError;
 use crate::common::http;
 use crate::common::sysinfo::systeminfo::SystemInfo;
 use crate::dependencies::java::main::JavaDistribution;
+use async_trait::async_trait;
+use serde::Deserialize;
 
 // Documentation: https://github.com/adoptium/api.adoptium.net/blob/main/docs/cookbook.adoc
 #[derive(Debug, Deserialize)]
@@ -37,9 +36,15 @@ pub fn get_architecture(
         "arm" => "arm",
         "sparcv9" => "sparcv9",
         "riscv64" => "riscv64",
-        _ => return Err(SergenError::InstallationError(
-            format!("Unknown system architecture: {}", system_info.architecture).into())
-        ),
+        _ => {
+            return Err(SergenError::InstallationError(
+                format!(
+                    "Unknown system architecture: {}",
+                    system_info.architecture
+                )
+                .into(),
+            ))
+        }
     };
     Ok(architecture_type.to_string())
 }
@@ -57,10 +62,7 @@ impl JavaDistribution for Adoptium {
             "aix",
             "alpine-linux",
         ];
-        let _image_type = vec![
-            "jdk",
-            "jre"
-        ];
+        let _image_type = vec!["jdk", "jre"];
 
         let url = "https://api.adoptium.net/v3/info/available_releases";
 

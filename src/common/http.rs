@@ -1,9 +1,9 @@
-use reqwest::{Error, Response, Client, Url};
-use std::sync::OnceLock;
+use reqwest::{Client, Error, Response, Url};
 use serde::de::DeserializeOwned;
 use std::fs::File;
 use std::io;
 use std::io::Error as IoError;
+use std::sync::OnceLock;
 
 static CLIENT: OnceLock<Client> = OnceLock::new();
 
@@ -13,7 +13,7 @@ fn get_client() -> &'static Client {
 
 pub async fn get<T>(url: &str) -> Result<T, Error>
 where
-    T: DeserializeOwned, 
+    T: DeserializeOwned,
 {
     let client: &Client = get_client();
     // TODO: check http status code
@@ -31,7 +31,8 @@ pub async fn download_file(url: &str) -> Result<(), Error> {
         return Ok(());
     }
 
-    let filename_result: Result<String, io::Error> = extract_filename(&resp, url);
+    let filename_result: Result<String, io::Error> =
+        extract_filename(&resp, url);
     let filename: String = match filename_result {
         Ok(name) => name,
         Err(err) => {
@@ -52,27 +53,34 @@ pub async fn download_file(url: &str) -> Result<(), Error> {
 }
 
 // Todo: Pass in a default filename, eg server.jar
-fn extract_filename(resp: &Response, url: &str) -> Result<String, IoError> {
+fn extract_filename(
+    resp: &Response,
+    url: &str,
+) -> Result<String, IoError> {
     if let Some(name) = extract_filename_from_response(resp) {
         Ok(name)
     } else if let Some(name) = extract_filename_from_url(url) {
         Ok(name)
     } else {
-        Err(IoError::new(io::ErrorKind::Other, "Error: Filename not found in response"))
+        Err(IoError::new(
+            io::ErrorKind::Other,
+            "Error: Filename not found in response",
+        ))
     }
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
 fn extract_filename_from_response(resp: &reqwest::Response) -> Option<String> {
-    if let Some(content_disposition) = resp.headers().get("Content-Disposition") {
+    if let Some(content_disposition) = resp.headers().get("Content-Disposition")
+    {
         content_disposition
             .to_str()
             .ok()
-            .and_then(|content|
+            .and_then(|content| {
                 parse_filename_from_content_disposition(content)
-            ).map(|filename| filename.to_string())
-    }
-    else {
+            })
+            .map(|filename| filename.to_string())
+    } else {
         None
     }
 }
@@ -89,11 +97,9 @@ fn parse_filename_from_content_disposition(content: &str) -> Option<&str> {
 }
 
 fn extract_filename_from_url(url: &str) -> Option<String> {
-    Url::parse(url)
-        .ok()
-        .and_then(|parsed_url| {
-            parsed_url
-                .path_segments()
-                .and_then(|segments| segments.last().map(ToString::to_string))
-        })
+    Url::parse(url).ok().and_then(|parsed_url| {
+        parsed_url
+            .path_segments()
+            .and_then(|segments| segments.last().map(ToString::to_string))
+    })
 }

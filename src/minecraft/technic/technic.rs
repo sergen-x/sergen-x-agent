@@ -1,6 +1,6 @@
-use std::error::Error;
-use serde::{Deserialize, Serialize};
 use crate::common::http;
+use serde::{Deserialize, Serialize};
+use std::error::Error;
 
 #[derive(Serialize, Deserialize)]
 struct Modpack {

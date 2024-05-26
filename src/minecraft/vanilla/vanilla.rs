@@ -1,10 +1,9 @@
-use std::error::Error;
-use async_trait::async_trait;
-use serde::Deserialize;
 use crate::common::error::SergenError;
 use crate::common::http;
-use crate::common::installer::{SimpleInstaller};
+use crate::common::installer::SimpleInstaller;
 use crate::minecraft::vanilla::versions::VersionInfo;
+use async_trait::async_trait;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -32,7 +31,10 @@ pub struct Version {
 }
 
 impl VersionManifest {
-    pub fn find_url_by_id(&self, id: &str) -> Option<&str> {
+    pub fn find_url_by_id(
+        &self,
+        id: &str,
+    ) -> Option<&str> {
         for version in &self.versions {
             if version.id == id {
                 return Some(&version.url);
@@ -51,7 +53,10 @@ impl VersionManifest {
                 Ok(Some(info))
             }
             None => {
-                println!("Version {} could not located in the version manifest.", version);
+                println!(
+                    "Version {} could not located in the version manifest.",
+                    version
+                );
                 Ok(None)
             }
         }
@@ -59,15 +64,14 @@ impl VersionManifest {
 }
 
 impl VersionInfo {
-    pub async fn download(
-        &self,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn download(&self) -> Result<(), Box<dyn std::error::Error>> {
         http::download_file(&self.downloads.server.url).await?;
         Ok(())
     }
 }
 
-pub async fn get_all_versions() -> Result<VersionManifest, Box<dyn std::error::Error>> {
+pub async fn get_all_versions(
+) -> Result<VersionManifest, Box<dyn std::error::Error>> {
     let url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     let versions: VersionManifest = http::get(url).await?;
     Ok(versions)
@@ -93,18 +97,20 @@ impl SimpleInstaller for VanillaMinecraft {
         }
 
         if !version_exists.is_empty() {
-            let download_url = manifest.get_download_url(&version_exists)
+            let download_url = manifest
+                .get_download_url(&version_exists)
                 .await
                 .expect("Failed to fetch download URL");
             if let Some(ref version_info) = download_url {
-                let _ = version_info.download()
+                let _ = version_info
+                    .download()
                     .await
                     .expect("Failed to download version");
             } else {
                 panic!("VersionInfo is None, cannot download version");
             }
         } else {
-                //
+            //
         }
         Ok(())
     }

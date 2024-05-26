@@ -1,11 +1,11 @@
-use std::error::Error;
-use serde::Deserialize;
 use crate::common::http;
 use crate::common::kv::pair::Map;
+use serde::Deserialize;
+use std::error::Error;
 
 #[derive(Deserialize)]
 pub struct VersionResponse {
-    versions: Map<String, Details>
+    versions: Map<String, Details>,
 }
 
 #[derive(Deserialize)]
@@ -17,11 +17,15 @@ pub struct Details {
 }
 
 pub async fn download_installer() -> Result<(), Box<dyn Error>> {
-    http::download_file("https://quiltmc.org/api/v1/download-latest-installer/java-universal").await?;
+    http::download_file(
+        "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
+    )
+    .await?;
     Ok(())
 }
 
-pub async fn get_installer_version() -> Result<VersionResponse, Box<dyn Error>> {
+pub async fn get_installer_version() -> Result<VersionResponse, Box<dyn Error>>
+{
     let url = "https://quiltmc.org/api/v1/latest-version-components";
     let res: VersionResponse = http::get(&url).await?;
     Ok(res)

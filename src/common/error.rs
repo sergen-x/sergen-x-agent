@@ -8,9 +8,14 @@ pub(crate) enum SergenError {
 impl std::error::Error for SergenError {}
 
 impl std::fmt::Display for SergenError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
-            SergenError::InstallationError(msg) => write!(f, "Error while installing: {}", msg),
+            SergenError::InstallationError(msg) => {
+                write!(f, "Error while installing: {}", msg)
+            }
         }
     }
 }

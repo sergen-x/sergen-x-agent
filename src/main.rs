@@ -1,51 +1,56 @@
-use std::collections::HashMap;
-use clap::{Arg, ArgMatches, command, Command};
-use std::future::Future;
-use std::ops::Deref;
-use std::sync::{Arc, Mutex};
-use crate::common::installer::Installer;
 use crate::commands::command::AsyncCommand;
 use crate::commands::games::get_commands;
+use crate::common::installer::Installer;
+use clap::{command, Arg, ArgMatches, Command};
+use std::collections::HashMap;
+use std::future::Future;
+use std::ops::Deref;
+use std::sync::Arc;
 
+pub mod commands;
 pub mod common;
 pub mod dependencies;
 pub mod minecraft;
-pub mod commands;
 
 #[tokio::main]
 async fn main() {
-    let matches: Arc<ArgMatches> = Arc::new(command!()
-        .subcommand(
-            Command::new("install")
-                .about("Installs a game")
-                .arg(
-                    Arg::new("game")
-                        .index(1)
-                        .required(true)
-                        .help("Name of the game to install"),
-                )
-                .arg(
-                    Arg::new("variant")
-                        .index(2)
-                        .required(false)
-                        .help("The variant of the game to install"),
-                )
-                .arg(
-                    Arg::new("version")
-                        .index(3)
-                        .required(false)
-                        .help("The version of the game to install"),
-                ),
-        )
-        .subcommand(
-            Command::new("start")
-                .about("Starts the game")
-        )
-        .get_matches());
+    let matches: Arc<ArgMatches> = Arc::new(
+        command!()
+            .subcommand(
+                Command::new("install")
+                    .about("Installs a game")
+                    .arg(
+                        Arg::new("game")
+                            .index(1)
+                            .required(true)
+                            .help("Name of the game to install"),
+                    )
+                    .arg(
+                        Arg::new("variant")
+                            .index(2)
+                            .required(false)
+                            .help("The variant of the game to install"),
+                    )
+                    .arg(
+                        Arg::new("version")
+                            .index(3)
+                            .required(false)
+                            .help("The version of the game to install"),
+                    ),
+            )
+            .subcommand(Command::new("start").about("Starts the game"))
+            .get_matches(),
+    );
 
-    let commands: Arc<tokio::sync::Mutex<HashMap<String, Arc<tokio::sync::Mutex<dyn AsyncCommand>>>>> = get_commands().await;
+    let commands: Arc<
+        tokio::sync::Mutex<
+            HashMap<String, Arc<tokio::sync::Mutex<dyn AsyncCommand>>>,
+        >,
+    > = get_commands().await;
 
-    let subcommand = matches.subcommand().map(|(name, args)| (name.to_string(), args.clone()));
+    let subcommand = matches
+        .subcommand()
+        .map(|(name, args)| (name.to_string(), args.clone()));
 
     if let Some((name, args)) = subcommand {
         let cloned_commands = Arc::clone(&commands);

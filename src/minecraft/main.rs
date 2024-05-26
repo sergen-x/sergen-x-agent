@@ -1,11 +1,10 @@
-use std::{fs, io};
-use std::error::Error;
+use crate::common::error::SergenError;
+use crate::common::installer::{Installer, Runner, SimpleInstaller};
+use crate::minecraft;
+use async_trait::async_trait;
 use std::io::Write;
 use std::sync::Arc;
-use crate::minecraft;
-use crate::common::installer::{Installer, Runner, SimpleInstaller};
-use async_trait::async_trait;
-use crate::common::error::SergenError;
+use std::{fs, io};
 
 pub(crate) struct Minecraft;
 
@@ -14,14 +13,20 @@ impl Installer for Minecraft {
     async fn install(
         &self,
         version: Option<String>,
-        variant: Option<String>
+        variant: Option<String>,
     ) -> Result<(), SergenError> {
         let variant_str = variant.unwrap().clone();
         let version_str = version.clone();
 
         let installer: Arc<dyn SimpleInstaller> = match variant_str.as_str() {
-            "vanilla" => Arc::new(minecraft::vanilla::vanilla::VanillaMinecraft),
-            _ => return Err(SergenError::InstallationError("Unsupported distribution variant".into())),
+            "vanilla" => {
+                Arc::new(minecraft::vanilla::vanilla::VanillaMinecraft)
+            }
+            _ => {
+                return Err(SergenError::InstallationError(
+                    "Unsupported distribution variant".into(),
+                ))
+            }
         };
 
         let result = installer.install(version_str).await;
@@ -30,7 +35,9 @@ impl Installer for Minecraft {
         // Handle the result, converting errors if necessary
         match result {
             Ok(_) => Ok(()),
-            Err(_) => Err(SergenError::InstallationError("Failed to spawn blocking task".into())),
+            Err(_) => Err(SergenError::InstallationError(
+                "Failed to spawn blocking task".into(),
+            )),
         }
     }
 
@@ -38,8 +45,9 @@ impl Installer for Minecraft {
         let _ = crate::dependencies::java::main::install(
             "21".to_string(),
             "adoptium".to_string(),
-            "jdk".to_string()
-        ).await;
+            "jdk".to_string(),
+        )
+        .await;
         Ok(())
     }
 }
@@ -77,8 +85,12 @@ impl Minecraft {
     }
 
     // Use aikar's flags - https://aikar.co/2018/07/02/tuning-the-jvm-g1gc-garbage-collector-flags-for-minecraft/
-    pub fn startup_command(memory: i32, jar_name: &str) -> String {
-        let common_flags= format!(r#"
+    pub fn startup_command(
+        memory: i32,
+        jar_name: &str,
+    ) -> String {
+        let common_flags = format!(
+            r#"
             java
             -Xms{}G
             -Xmx{}G
@@ -99,20 +111,28 @@ impl Minecraft {
             -XX:MaxTenuringThreshold=1
             -Dusing.aikars.flags=https://mcflags.emc.gs
             -Daikars.new.flags=true -jar {} --nogui
-        "#, memory, memory, jar_name);
+        "#,
+            memory, memory, jar_name
+        );
 
         let flags = if memory < 12 {
-            format!(r#"{}
+            format!(
+                r#"{}
                 -XX:G1NewSizePercent=30
                 -XX:G1MaxNewSizePercent=40
                 -XX:G1HeapRegionSize=8M
-            "#, common_flags)
+            "#,
+                common_flags
+            )
         } else {
-            format!(r#"{}
+            format!(
+                r#"{}
                 -XX:G1NewSizePercent=40
                 -XX:G1MaxNewSizePercent=50
                 -XX:G1HeapRegionSize=16M
-            "#, common_flags)
+            "#,
+                common_flags
+            )
         };
         flags
     }

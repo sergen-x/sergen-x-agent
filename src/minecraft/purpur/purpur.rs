@@ -1,6 +1,6 @@
+use crate::common::http;
 use reqwest::Error;
 use serde::{Deserialize, Serialize};
-use crate::common::http;
 
 #[derive(Serialize, Deserialize)]
 struct Versions {
@@ -9,12 +9,8 @@ struct Versions {
 }
 
 // Projects = ["purpur, "purformance"]
-pub async fn get_versions(
-    project: &str
-) -> Result<Versions, Error> {
-    let url = format!(
-         "https://api.purpurmc.org/v2/{project}"
-    );
+pub async fn get_versions(project: &str) -> Result<Versions, Error> {
+    let url = format!("https://api.purpurmc.org/v2/{project}");
     let versions: Versions = http::get(&url).await?;
     Ok(versions)
 }

@@ -30,9 +30,6 @@ impl Installer for Minecraft {
         };
 
         let result = installer.install(version_str).await;
-
-        // Spawn a blocking task to execute the install method
-        // Handle the result, converting errors if necessary
         match result {
             Ok(_) => Ok(()),
             Err(_) => Err(SergenError::InstallationError(

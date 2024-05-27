@@ -1,9 +1,12 @@
-use std::io::{Read};
-use std::error::Error;
-use sha2::{Digest, Sha256};
 use crate::common::hash::hex;
+use sha2::{Digest, Sha256};
+use std::error::Error;
+use std::io::Read;
 
-pub fn compare<R: Read>(mut reader: R, expected_hash: &str) -> Result<bool, Box<dyn Error>> {
+pub fn compare<R: Read>(
+    mut reader: R,
+    expected_hash: &str,
+) -> Result<bool, Box<dyn Error>> {
     let mut hasher = Sha256::new();
     let mut buffer = [0; 4 * 1024 * 1024];
 

@@ -1,12 +1,11 @@
+use crate::common::http;
+use serde::Deserialize;
 use std::error::Error;
 use std::io;
-use serde::Deserialize;
-use crate::common::http;
-use crate::common::installer::InstallerFuture;
 
 #[derive(Deserialize)]
 pub struct Versions {
-    versions: Vec<String>
+    versions: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -35,12 +34,8 @@ struct Build {
 }
 
 // Projects = ["mohist", "banner"]
-pub async fn get_versions(
-    project: &str,
-) -> Result<Versions, Box<dyn Error>> {
-    let url = format!(
-        "https://mohistmc.com/api/v2/projects/{project}"
-    );
+pub async fn get_versions(project: &str) -> Result<Versions, Box<dyn Error>> {
+    let url = format!("https://mohistmc.com/api/v2/projects/{project}");
     let versions: Versions = http::get(&url).await?;
     Ok(versions)
 }
@@ -57,17 +52,16 @@ pub async fn get_builds(
 }
 
 impl Builds {
-    pub fn download_latest(&self) -> InstallerFuture {
+    pub fn download_latest(&self) -> Result<(), Box<dyn Error>> {
         let builds = self.builds.clone();
-        Box::pin(async move {
-            if let Some(last_build) = builds.last() {
-                http::download_file(&last_build.url);
-                Ok(())
-            } else {
-                println!("No builds available.");
-                let error = io::Error::new(io::ErrorKind::Other, "No builds available.");
-                Err(Box::new(error) as Box<dyn Error>)
-            }
-        })
+        if let Some(last_build) = builds.last() {
+            http::download_file(&last_build.url);
+            Ok(())
+        } else {
+            println!("No builds available.");
+            let error =
+                io::Error::new(io::ErrorKind::Other, "No builds available.");
+            Err(Box::new(error) as Box<dyn Error>)
+        }
     }
 }

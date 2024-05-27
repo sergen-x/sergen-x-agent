@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use crate::common::http;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 struct Github {
@@ -47,10 +47,10 @@ struct Recommended {
 #[derive(Debug, Deserialize)]
 struct VersionResponse {
     name: String,
-    #[serde(rename="pluginId")]
+    #[serde(rename = "pluginId")]
     plugin_id: String,
     github: Github,
-    #[serde(rename="buildTypes")]
+    #[serde(rename = "buildTypes")]
     build_types: BuildTypes,
     dependencies: Dependencies,
 }
@@ -61,7 +61,7 @@ pub fn list_projects() -> Vec<&'static str> {
 }
 
 pub async fn get_versions(
-    project: &str,
+    project: &str
 ) -> Result<VersionResponse, Box<dyn std::error::Error>> {
     let url = format!(
         "https://dl-api.spongepowered.org/v1/org.spongepowered/{}",

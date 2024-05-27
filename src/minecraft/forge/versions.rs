@@ -1,10 +1,10 @@
-use serde::Deserialize;
 use crate::common::http;
 use crate::common::kv::pair::Map;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 struct ForgeVersions {
-    #[serde(rename="homepage")]
+    #[serde(rename = "homepage")]
     _homepage: String,
     promos: Map<String, String>,
 }

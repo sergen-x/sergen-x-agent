@@ -1,8 +1,9 @@
-use serde::Deserialize;
+use crate::common::error::SergenError;
 use crate::common::http;
-use crate::common::installer::InstallerFuture;
 use crate::common::sysinfo::systeminfo::SystemInfo;
 use crate::dependencies::java::main::JavaDistribution;
+use async_trait::async_trait;
+use serde::Deserialize;
 
 // Documentation: https://github.com/adoptium/api.adoptium.net/blob/main/docs/cookbook.adoc
 #[derive(Debug, Deserialize)]
@@ -21,7 +22,9 @@ struct AdoptiumVersions {
     _tip_version: i32,
 }
 
-pub fn get_architecture(system_info: SystemInfo) -> Result<String, Box<dyn std::error::Error>> {
+pub fn get_architecture(
+    system_info: SystemInfo
+) -> Result<String, SergenError> {
     let architecture_type = match system_info.architecture.as_str() {
         "x86_64" => "x64",
         "x86" => "x86",
@@ -33,14 +36,24 @@ pub fn get_architecture(system_info: SystemInfo) -> Result<String, Box<dyn std::
         "arm" => "arm",
         "sparcv9" => "sparcv9",
         "riscv64" => "riscv64",
-        _ => return Err(format!("Unknown system architecture: {}", system_info.architecture).into()),
+        _ => {
+            return Err(SergenError::InstallationError(
+                format!(
+                    "Unknown system architecture: {}",
+                    system_info.architecture
+                )
+                .into(),
+            ))
+        }
     };
     Ok(architecture_type.to_string())
 }
 
 pub struct Adoptium;
+
+#[async_trait]
 impl JavaDistribution for Adoptium {
-    fn get_versions(&self) -> InstallerFuture {
+    async fn get_versions(&self) -> Result<(), SergenError> {
         let _supported_os = vec![
             "linux",
             "windows",
@@ -49,35 +62,28 @@ impl JavaDistribution for Adoptium {
             "aix",
             "alpine-linux",
         ];
-        let _image_type = vec![
-            "jdk",
-            "jre"
-        ];
+        let _image_type = vec!["jdk", "jre"];
 
         let url = "https://api.adoptium.net/v3/info/available_releases";
 
-        Box::pin(async move {
-            let versions: AdoptiumVersions = http::get(url).await?;
-            println!("{:?}", versions.lts_releases);
-            Ok(())
-        })
+        let versions: AdoptiumVersions = http::get(url).await?;
+        println!("{:?}", versions.lts_releases);
+        Ok(())
     }
 
-    fn download_version(
+    async fn download_version(
         &self,
         feature_version: &str,
         system_info: SystemInfo,
         image_type: &str,
-    ) -> InstallerFuture {
+    ) -> Result<(), SergenError> {
         let architecture = get_architecture(system_info.clone()).unwrap();
         let url = format!(
             "https://api.adoptium.net/v3/binary/latest/{}/ga/{}/{}/{}/hotspot/normal/eclipse",
             feature_version, system_info.os, architecture, image_type
         );
-        Box::pin(async move {
-            http::download_file(&url).await?;
-            println!("Downloaded");
-            Ok(())
-        })
+        http::download_file(&url).await?;
+        println!("Downloaded");
+        Ok(())
     }
 }

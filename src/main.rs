@@ -1,81 +1,73 @@
-use std::collections::HashMap;
-use clap::{Arg, command, Command};
-use std::future::Future;
-use std::ops::Deref;
-use crate::common::installer::Installer;
-use crate::commands::install::InstallCommand;
-use crate::commands::start::StartCommand;
 use crate::commands::command::AsyncCommand;
+use crate::commands::games::get_commands;
 
+use clap::{command, Arg, ArgMatches, Command};
+use std::collections::HashMap;
+
+
+use std::sync::Arc;
+
+pub mod commands;
 pub mod common;
 pub mod dependencies;
 pub mod minecraft;
-pub mod commands;
-
-async fn install_game(args: &clap::ArgMatches) {
-    let mut games: HashMap<&str, Box<dyn Installer>> = HashMap::new();
-    games.insert("minecraft", Box::new(minecraft::main::Minecraft));
-
-    let version = args.get_one::<String>("version");
-    let variant = args.get_one::<String>("variant");
-
-    match args.get_one::<String>("game") {
-        Some(game) => {
-            if let Some(func) = games.get(&game.as_str()) {
-                let _ = func.install_dependencies().await;
-                let _ = func.install(version.cloned(), variant.cloned()).await;
-            } else {
-                println!("Game not recognized");
-            }
-        },
-        None => {
-            eprintln!("No game provided.");
-        }
-    }
-}
 
 #[tokio::main]
 async fn main() {
-    let mut commands: HashMap<&str, Box<dyn AsyncCommand>> = HashMap::new();
-    commands.insert("install", Box::new(InstallCommand));
-    commands.insert("start", Box::new(StartCommand));
+    let matches: Arc<ArgMatches> = Arc::new(
+        command!()
+            .subcommand(
+                Command::new("install")
+                    .about("Installs a game")
+                    .arg(
+                        Arg::new("game")
+                            .index(1)
+                            .required(true)
+                            .help("Name of the game to install"),
+                    )
+                    .arg(
+                        Arg::new("variant")
+                            .index(2)
+                            .required(false)
+                            .help("The variant of the game to install"),
+                    )
+                    .arg(
+                        Arg::new("version")
+                            .index(3)
+                            .required(false)
+                            .help("The version of the game to install"),
+                    ),
+            )
+            .subcommand(Command::new("start").about("Starts the game"))
+            .get_matches(),
+    );
 
-    let matches = command!()
-        .subcommand(
-            Command::new("install")
-                .about("Installs a game")
-                .arg(
-                    Arg::new("game")
-                        .index(1)
-                        .required(true)
-                        .help("Name of the game to install"),
-                )
-                .arg(
-                    Arg::new("variant")
-                        .index(2)
-                        .required(false)
-                        .help("The variant of the game to install"),
-                )
-                .arg(
-                    Arg::new("version")
-                        .index(3)
-                        .required(false)
-                        .help("The version of the game to install"),
-                ),
-        )
-        .subcommand(
-            Command::new("start")
-                .about("Starts the game")
-        )
-        .get_matches();
+    let commands: Arc<
+        tokio::sync::Mutex<
+            HashMap<String, Arc<tokio::sync::Mutex<dyn AsyncCommand>>>,
+        >,
+    > = get_commands().await;
 
-    if let Some((name, args)) = matches.subcommand() {
-        if let Some(command) = commands.get(name) {
-            let future = command.execute(args);
-            let handler = tokio::task::spawn(future);
-            handler.await.expect("Task panicked");
-        } else {
-            println!("Command not recognized");
-        }
+    let subcommand = matches
+        .subcommand()
+        .map(|(name, args)| (name.to_string(), args.clone()));
+
+    if let Some((name, args)) = subcommand {
+        let cloned_commands = Arc::clone(&commands);
+        let handler = tokio::task::spawn(async move {
+            let command = {
+                let locked_commands = cloned_commands.lock().await;
+                locked_commands.get(&name).cloned()
+            };
+
+            if let Some(command) = command {
+                let cmd = command.lock().await;
+                cmd.execute(&args).await
+            } else {
+                println!("Command not recognized");
+                Ok(())
+            }
+        });
+        handler.await.expect("Task panicked");
     }
 }

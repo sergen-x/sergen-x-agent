@@ -1,7 +1,9 @@
-use serde::Deserialize;
+use crate::common::error::SergenError;
 use crate::common::http;
-use crate::common::installer::{SimpleInstaller, InstallerFuture};
+use crate::common::installer::SimpleInstaller;
 use crate::minecraft::vanilla::versions::VersionInfo;
+use async_trait::async_trait;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,7 +31,10 @@ pub struct Version {
 }
 
 impl VersionManifest {
-    pub fn find_url_by_id(&self, id: &str) -> Option<&str> {
+    pub fn find_url_by_id(
+        &self,
+        id: &str,
+    ) -> Option<&str> {
         for version in &self.versions {
             if version.id == id {
                 return Some(&version.url);
@@ -48,7 +53,10 @@ impl VersionManifest {
                 Ok(Some(info))
             }
             None => {
-                println!("Version {} could not located in the version manifest.", version);
+                println!(
+                    "Version {} could not located in the version manifest.",
+                    version
+                );
                 Ok(None)
             }
         }
@@ -56,53 +64,58 @@ impl VersionManifest {
 }
 
 impl VersionInfo {
-    pub async fn download(
-        &self,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn download(&self) -> Result<(), Box<dyn std::error::Error>> {
         http::download_file(&self.downloads.server.url).await?;
         Ok(())
     }
 }
 
-pub async fn get_all_versions() -> Result<VersionManifest, Box<dyn std::error::Error>> {
+pub async fn get_all_versions(
+) -> Result<VersionManifest, Box<dyn std::error::Error>> {
     let url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     let versions: VersionManifest = http::get(url).await?;
     Ok(versions)
 }
 
 pub struct VanillaMinecraft;
+
+#[async_trait]
 impl SimpleInstaller for VanillaMinecraft {
-    fn install(
+    async fn install(
         &self,
         version: Option<String>,
-    ) -> InstallerFuture {
-        Box::pin(async move {
-            let manifest = get_all_versions()
-                .await
-                .expect("Failed to fetch version manifest");
+    ) -> Result<(), SergenError> {
+        let manifest = get_all_versions()
+            .await
+            .expect("Failed to fetch version manifest");
 
-            let mut version_exists = String::new();
-            if let Some(ver) = version.clone() {
-                if ver == "latest" {
-                    version_exists = manifest.latest.release.clone();
-                }
-            }
-
-            if !version_exists.is_empty() {
-                let download_url = manifest.get_download_url(&version_exists)
-                    .await
-                    .expect("Failed to fetch download URL");
-                if let Some(ref version_info) = download_url {
-                    let _ = version_info.download()
-                        .await
-                        .expect("Failed to download version");
+        let version_exists = match version {
+            None => manifest.latest.release.clone(),
+            Some(ver) => {
+                if ver == "latest" || ver.is_empty() {
+                    manifest.latest.release.clone()
                 } else {
-                    panic!("VersionInfo is None, cannot download version");
+                    panic!("A version wasn't supplied")
                 }
-            } else {
-                //
             }
-            Ok(())
-        })
+        };
+
+        if !version_exists.is_empty() {
+            let download_url = manifest
+                .get_download_url(&version_exists)
+                .await
+                .expect("Failed to fetch download URL");
+            if let Some(ref version_info) = download_url {
+                let _ = version_info
+                    .download()
+                    .await
+                    .expect("Failed to download version");
+            } else {
+                panic!("VersionInfo is None, cannot download version");
+            }
+        } else {
+            panic!("Supplied version did not exist!")
+        }
+        Ok(())
     }
 }

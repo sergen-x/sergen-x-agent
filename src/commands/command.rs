@@ -1,8 +1,10 @@
-use std::future::Future;
-use std::pin::Pin;
+use crate::common::error::SergenError;
+use async_trait::async_trait;
 
-pub(crate) type SergenCommand = Pin<Box<dyn Future<Output = ()> + Send>>;
-
-pub(crate) trait AsyncCommand: Send {
-    fn execute(&self, args: &clap::ArgMatches) -> SergenCommand;
+#[async_trait]
+pub(crate) trait AsyncCommand: Sync + Send {
+    async fn execute(
+        &self,
+        args: &clap::ArgMatches,
+    ) -> Result<(), SergenError>;
 }

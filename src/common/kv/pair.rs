@@ -12,7 +12,11 @@ where
     Key: Eq,
 {
     // Inserts a key-value pair
-    pub fn insert(&mut self, key: Key, value: Value) {
+    pub fn insert(
+        &mut self,
+        key: Key,
+        value: Value,
+    ) {
         self.entries.push((key, value));
     }
 
@@ -22,7 +26,10 @@ where
     }
 
     // Returns a value of a key in the map
-    pub fn get(&self, key: &Key) -> Option<&Value> {
+    pub fn get(
+        &self,
+        key: &Key,
+    ) -> Option<&Value> {
         self.entries
             .iter()
             .find_map(|(k, v)| if k == key { Some(v) } else { None })
@@ -49,15 +56,23 @@ where
         {
             type Value = Map<Key, Value>;
 
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            fn expecting(
+                &self,
+                formatter: &mut std::fmt::Formatter,
+            ) -> std::fmt::Result {
                 formatter.write_str("key-value pair")
             }
 
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            fn visit_map<A>(
+                self,
+                mut map: A,
+            ) -> Result<Self::Value, A::Error>
             where
                 A: MapAccess<'de>,
             {
-                let mut new_map = Map { entries: Vec::new() };
+                let mut new_map = Map {
+                    entries: Vec::new(),
+                };
 
                 while let Some((key, value)) = map.next_entry()? {
                     new_map.insert(key, value);

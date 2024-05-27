@@ -1,26 +1,27 @@
-use std::error::Error;
-use std::future::Future;
-use std::pin::Pin;
+use crate::common::error::SergenError;
+use async_trait::async_trait;
 
-pub type InstallerFuture = Pin<Box<dyn Future<Output = Result<(), Box<dyn Error>>> + Send>>;
-
-pub trait Installer: Send {
-    fn install(
+#[async_trait]
+pub trait Installer: Sync + Send {
+    async fn install(
         &self,
         version: Option<String>,
-        variant: Option<String>
-    ) -> InstallerFuture;
-    fn install_dependencies(
-        &self
-    ) -> InstallerFuture {
+        variant: Option<String>,
+    ) -> Result<(), SergenError>;
+    async fn install_dependencies(&self) -> Result<(), SergenError> {
         unimplemented!("install_dependencies is not implemented");
     }
 }
 
-pub trait SimpleInstaller: Send {
-    fn install(&self, version: Option<String>) -> InstallerFuture;
+#[async_trait]
+pub trait SimpleInstaller: Sync + Send {
+    async fn install(
+        &self,
+        version: Option<String>,
+    ) -> Result<(), SergenError>;
 }
 
-pub trait Runner: Send {
-    fn start(&self) -> InstallerFuture;
+#[async_trait]
+pub trait Runner: Sync {
+    async fn start(&self) -> Result<(), SergenError>;
 }

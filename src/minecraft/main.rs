@@ -1,55 +1,67 @@
-use std::{fs, io};
-use std::io::Write;
+use crate::common::error::SergenError;
+use crate::common::installer::{Installer, Runner, SimpleInstaller};
 use crate::minecraft;
-use crate::common::installer::{Installer, InstallerFuture, Runner, SimpleInstaller};
+use async_trait::async_trait;
+use std::io::Write;
+use std::sync::Arc;
+use std::{fs, io};
 
 pub(crate) struct Minecraft;
 
+#[async_trait]
 impl Installer for Minecraft {
-    fn install(
+    async fn install(
         &self,
         version: Option<String>,
-        variant: Option<String>
-    ) -> InstallerFuture {
-        Box::pin(async move {
-            let variant_str = variant.unwrap().clone();
-            let version_str = version.clone();
+        variant: Option<String>,
+    ) -> Result<(), SergenError> {
+        let variant_str = variant.unwrap().clone();
+        let version_str = version.clone();
 
-            let installer: Box<dyn SimpleInstaller> = match variant_str.as_str() {
-                "vanilla" => Box::new(minecraft::vanilla::vanilla::VanillaMinecraft),
-                _ => return Err("Unsupported distribution variant".into()),
-            };
-            installer.install(version_str).await.expect("TODO: panic message");
-            Ok(())
-        })
+        let installer: Arc<dyn SimpleInstaller> = match variant_str.as_str() {
+            "vanilla" => {
+                Arc::new(minecraft::vanilla::vanilla::VanillaMinecraft)
+            }
+            _ => {
+                return Err(SergenError::InstallationError(
+                    "Unsupported distribution variant".into(),
+                ))
+            }
+        };
+
+        let result = installer.install(version_str).await;
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(SergenError::InstallationError(
+                "Failed to spawn blocking task".into(),
+            )),
+        }
     }
 
-    fn install_dependencies(&self) -> InstallerFuture {
-        Box::pin(async move {
-            let _ = crate::dependencies::java::main::install(
-                "21".to_string(),
-                "adoptium".to_string(),
-                "jdk".to_string()
-            ).await;
-            Ok(())
-        })
+    async fn install_dependencies(&self) -> Result<(), SergenError> {
+        let _ = crate::dependencies::java::main::install(
+            "21".to_string(),
+            "adoptium".to_string(),
+            "jdk".to_string(),
+        )
+        .await;
+        Ok(())
     }
 }
 
+#[async_trait]
 impl Runner for Minecraft {
-    fn start(&self) -> InstallerFuture {
-        Box::pin(async move {
-            let eula_path = "EULA.txt";
-            match Minecraft::is_eula_accepted(eula_path) {
-                Ok(true) => println!("Minecraft's EULA is accepted."),
-                Ok(false) => match Minecraft::accept_eula(eula_path) {
-                    Ok(_) => println!("Minecraft's EULA is now accepted."),
-                    Err(e) => eprintln!("Error accepting EULA: {}", e),
-                },
-                Err(e) => eprintln!("Error loading EULA: {}", e),
-            }
-            Ok(())
-        })
+    async fn start(&self) -> Result<(), SergenError> {
+        let eula_path = "EULA.txt";
+        match Minecraft::is_eula_accepted(eula_path) {
+            Ok(true) => println!("Minecraft's EULA is accepted."),
+            Ok(false) => match Minecraft::accept_eula(eula_path) {
+                Ok(_) => println!("Minecraft's EULA is now accepted."),
+                Err(e) => eprintln!("Error accepting EULA: {}", e),
+            },
+            Err(e) => eprintln!("Error loading EULA: {}", e),
+        }
+        Ok(())
     }
 }
 
@@ -70,8 +82,12 @@ impl Minecraft {
     }
 
     // Use aikar's flags - https://aikar.co/2018/07/02/tuning-the-jvm-g1gc-garbage-collector-flags-for-minecraft/
-    pub fn startup_command(memory: i32, jar_name: &str) -> String {
-        let common_flags= format!(r#"
+    pub fn startup_command(
+        memory: i32,
+        jar_name: &str,
+    ) -> String {
+        let common_flags = format!(
+            r#"
             java
             -Xms{}G
             -Xmx{}G
@@ -92,20 +108,28 @@ impl Minecraft {
             -XX:MaxTenuringThreshold=1
             -Dusing.aikars.flags=https://mcflags.emc.gs
             -Daikars.new.flags=true -jar {} --nogui
-        "#, memory, memory, jar_name);
+        "#,
+            memory, memory, jar_name
+        );
 
         let flags = if memory < 12 {
-            format!(r#"{}
+            format!(
+                r#"{}
                 -XX:G1NewSizePercent=30
                 -XX:G1MaxNewSizePercent=40
                 -XX:G1HeapRegionSize=8M
-            "#, common_flags)
+            "#,
+                common_flags
+            )
         } else {
-            format!(r#"{}
+            format!(
+                r#"{}
                 -XX:G1NewSizePercent=40
                 -XX:G1MaxNewSizePercent=50
                 -XX:G1HeapRegionSize=16M
-            "#, common_flags)
+            "#,
+                common_flags
+            )
         };
         flags
     }

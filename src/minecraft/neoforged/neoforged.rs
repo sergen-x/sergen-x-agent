@@ -14,12 +14,12 @@ pub async fn get_versions() -> Result<Versions, Error> {
     Ok(res)
 }
 
-pub fn download_version(
+pub async fn download_version(
     version: &str
 ) -> Result<(), Box<dyn std::error::Error>> {
     let url = format!(
         "https://maven.neoforged.net/releases/net/neoforged/neoforge/{version}/neoforge-{version}-installer.jar"
     );
-    http::download_file(&url);
+    http::download_file(&url).await;
     Ok(())
 }

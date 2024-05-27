@@ -22,6 +22,6 @@ pub async fn download_version(
     let url = format!(
         "https://api.purpurmc.org/v2/{project}/{version}/latest/download"
     );
-    http::download_file(&url);
+    http::download_file(&url).await;
     Ok(())
 }
